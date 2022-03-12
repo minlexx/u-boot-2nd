@@ -2,6 +2,9 @@
 #
 # (C) Copyright 2015 Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
 
+obj-$(CONFIG_SDM660) += clock-sdm660.o
+obj-$(CONFIG_SDM660) += init_sdm660.o
+obj-$(CONFIG_SDM660) += sysmap-sdm660.o
 obj-$(CONFIG_SDM845) += clock-sdm845.o
 obj-$(CONFIG_SDM845) += sysmap-sdm845.o
 obj-$(CONFIG_SDM845) += init_sdm845.o
