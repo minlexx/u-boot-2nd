@@ -82,6 +82,19 @@ config TARGET_QCS404EVB
 	  - 1GiB RAM
 	  - 8GiB eMMC, uSD slot
 
+config TARGET_XIAOMI_LAVENDER
+	bool "Xiaomi Redmi Note 7 (lavender)"
+	help
+	  Support for Xiaomi Redmi Note 7 (lavender) phone.
+	  Supports U-Boot only as secondary bootloader.
+	  Features:
+	  - Qualcomm Snapdragon SDM660 SoC
+	  - 3/4 GiB RAM
+	  - 32/64 GiB eMMC
+	  - SD Card slot
+	select MISC_INIT_R
+	select SDM660
+
 endchoice
 
 source "board/qualcomm/dragonboard410c/Kconfig"
@@ -89,5 +102,6 @@ source "board/qualcomm/dragonboard820c/Kconfig"
 source "board/qualcomm/dragonboard845c/Kconfig"
 source "board/samsung/starqltechn/Kconfig"
 source "board/qualcomm/qcs404-evb/Kconfig"
+source "board/xiaomi/lavender/Kconfig"
 
 endif
