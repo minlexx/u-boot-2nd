@@ -253,3 +253,100 @@ U_BOOT_DRIVER(serial_msm) = {
 	.probe = msm_serial_probe,
 	.ops	= &msm_serial_ops,
 };
+
+#ifdef CONFIG_DEBUG_UART_MSM_UARTDM
+
+#include <debug_uart.h>
+
+static inline void _debug_uart_init(void)
+{
+	/* we rely on whatever was configured by first-stage
+	   bootloader, so we don't have any special init here */
+}
+
+static inline void msm_write(unsigned int val, unsigned int off)
+{
+	writel_relaxed(val, (uintptr_t)CONFIG_DEBUG_UART_BASE + off);
+}
+
+static inline unsigned int msm_read(unsigned int off)
+{
+	return readl_relaxed((uintptr_t)CONFIG_DEBUG_UART_BASE + off);
+}
+
+/* UART_ values are different from UARTDM_ ones? */
+#define UART_SR				0x08	/* status register */
+#define UART_SR_HUNT_CHAR		BIT(7)
+#define UART_SR_RX_BREAK		BIT(6)
+#define UART_SR_PAR_FRAME_ERR		BIT(5)
+#define UART_SR_OVERRUN			BIT(4)
+#define UART_SR_TX_EMPTY		BIT(3)
+#define UART_SR_TX_READY		BIT(2)
+#define UART_SR_RX_FULL			BIT(1)
+#define UART_SR_RX_READY		BIT(0)
+
+#define UART_ISR			0x14
+#define UART_ISR_TX_READY		BIT(7)
+
+#define UART_CR				0x10	/* command register */
+#define UART_CR_CMD_NULL		(0 << 4)
+#define UART_CR_CMD_RESET_RX		(1 << 4)
+#define UART_CR_CMD_RESET_TX		(2 << 4)
+#define UART_CR_CMD_RESET_ERR		(3 << 4)
+#define UART_CR_CMD_RESET_BREAK_INT	(4 << 4)
+#define UART_CR_CMD_START_BREAK		(5 << 4)
+#define UART_CR_CMD_STOP_BREAK		(6 << 4)
+#define UART_CR_CMD_RESET_CTS		(7 << 4)
+#define UART_CR_CMD_RESET_STALE_INT	(8 << 4)
+#define UART_CR_CMD_PACKET_MODE		(9 << 4)
+#define UART_CR_CMD_MODE_RESET		(12 << 4)
+#define UART_CR_CMD_SET_RFR		(13 << 4)
+#define UART_CR_CMD_RESET_RFR		(14 << 4)
+#define UART_CR_CMD_PROTECTION_EN	(16 << 4)
+#define UART_CR_CMD_STALE_EVENT_DISABLE	(6 << 8)
+#define UART_CR_CMD_STALE_EVENT_ENABLE	(80 << 4)
+#define UART_CR_CMD_FORCE_STALE		(4 << 8)
+#define UART_CR_CMD_RESET_TX_READY	(3 << 8)
+#define UART_CR_TX_DISABLE		BIT(3)
+#define UART_CR_TX_ENABLE		BIT(2)
+#define UART_CR_RX_DISABLE		BIT(1)
+#define UART_CR_RX_ENABLE		BIT(0)
+#define UART_CR_CMD_RESET_RXBREAK_START	((1 << 11) | (2 << 4))
+
+/* another UARTDM_TF value, which differs from 0x100 in this driver */
+#define UART_TF				0x70
+
+static inline void msm_wait_for_xmitr(void)
+{
+	unsigned int timeout = 500000;
+
+	while (!(msm_read(UART_SR) & UART_SR_TX_EMPTY)) {
+		if (msm_read(UART_ISR) & UART_ISR_TX_READY)
+			break;
+		udelay(1);
+		if (!timeout--)
+			break;
+	}
+	msm_write(UART_CR_CMD_RESET_TX_READY, UART_CR);
+}
+
+static void msm_reset_dm_count(int count)
+{
+	msm_wait_for_xmitr();
+	msm_write(count, UARTDM_NCF_TX);
+	msm_read(UARTDM_NCF_TX);
+}
+
+static void _debug_uart_putc(char ch)
+{
+	msm_reset_dm_count(1);
+
+	while (!(msm_read(UART_SR) & UART_SR_TX_READY))
+		cpu_relax();
+
+	msm_write(ch,UART_TF);
+}
+
+DEBUG_UART_FUNCS
+
+#endif
