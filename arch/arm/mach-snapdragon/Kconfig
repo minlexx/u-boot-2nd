@@ -9,6 +9,11 @@ config SYS_MALLOC_F_LEN
 config SPL_SYS_MALLOC_F_LEN
 	default 0x2000
 
+config SDM660
+	bool "Qualcomm Snapdragon 660 SoC"
+	default n
+	select LINUX_KERNEL_IMAGE_HEADER
+
 config SDM845
 	bool "Qualcomm Snapdragon 845 SoC"
 	default n
