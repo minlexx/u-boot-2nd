@@ -1,0 +1,336 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Qualcomm SDM660 chip device tree source
+ *
+ * (C) Copyright 2022 Alexey Minnekhanov <alexeymin@postmarketos.org>
+ *
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/clock/qcom,gcc-sdm660.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/spmi/spmi.h>
+
+#include "skeleton64.dtsi"
+
+/ {
+	clocks {
+		xo_board: xo-board {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <19200000>;
+			clock-output-names = "xo_board";
+		};
+
+		sleep_clk: sleep-clk {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <32764>;
+			clock-output-names = "sleep_clk";
+		};
+	};
+
+	soc: soc {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges = <0 0 0 0xffffffff>;
+		compatible = "simple-bus";
+
+		gcc: clock-controller@100000 {
+			compatible = "qcom,gcc-sdm660";
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+			#power-domain-cells = <1>;
+			reg = <0x00100000 0x94000>;
+		};
+
+		tlmm: pinctrl@3100000 {
+			compatible = "qcom,sdm660-pinctrl";
+			reg = <0x03100000 0x400000>,
+				<0x03500000 0x400000>,
+				<0x03900000 0x400000>;
+			reg-names = "south", "center", "north";
+			gpio-controller;
+			gpio-ranges = <&tlmm 0 0 114>;
+			#gpio-cells = <2>;
+			//interrupt-controller; // u-boot doesn't support interrupts
+			//#interrupt-cells = <2>;
+			//interrupts = <GIC_SPI 208 IRQ_TYPE_LEVEL_HIGH>;
+
+			blsp1_uart1_default: blsp1-uart1-default {
+				pins = "gpio0", "gpio1", "gpio2", "gpio3";
+				drive-strength = <2>;
+				bias-disable;
+			};
+
+			blsp1_uart1_sleep: blsp1-uart1-sleep {
+				pins = "gpio0", "gpio1", "gpio2", "gpio3";
+				drive-strength = <2>;
+				bias-disable;
+			};
+
+			blsp1_uart2_default: blsp1-uart2-default {
+				pins = "gpio4", "gpio5";
+				drive-strength = <2>;
+				bias-disable;
+			};
+
+			blsp2_uart1_default: blsp2-uart1-active {
+				tx-rts {
+					pins = "gpio16", "gpio19";
+					function = "blsp_uart5";
+					drive-strength = <2>;
+					bias-disable;
+				};
+
+				rx {
+					/*
+					 * Avoid garbage data while BT module
+					 * is powered off or not driving signal
+					 */
+					pins = "gpio17";
+					function = "blsp_uart5";
+					drive-strength = <2>;
+					bias-pull-up;
+				};
+
+				cts {
+					/* Match the pull of the BT module */
+					pins = "gpio18";
+					function = "blsp_uart5";
+					drive-strength = <2>;
+					bias-pull-down;
+				};
+			};
+
+			blsp2_uart1_sleep: blsp2-uart1-sleep {
+				tx {
+					pins = "gpio16";
+					function = "gpio";
+					drive-strength = <2>;
+					bias-pull-up;
+				};
+
+				rx-cts-rts {
+					pins = "gpio17", "gpio18", "gpio19";
+					function = "gpio";
+					drive-strength = <2>;
+					bias-no-pull;
+				};
+			};
+
+			sdc1_state_on: sdc1-on {
+				clk {
+					pins = "sdc1_clk";
+					bias-disable;
+					drive-strength = <16>;
+				};
+
+				cmd {
+					pins = "sdc1_cmd";
+					bias-pull-up;
+					drive-strength = <10>;
+				};
+
+				data {
+					pins = "sdc1_data";
+					bias-pull-up;
+					drive-strength = <10>;
+				};
+
+				rclk {
+					pins = "sdc1_rclk";
+					bias-pull-down;
+				};
+			};
+
+			sdc1_state_off: sdc1-off {
+				clk {
+					pins = "sdc1_clk";
+					bias-disable;
+					drive-strength = <2>;
+				};
+
+				cmd {
+					pins = "sdc1_cmd";
+					bias-pull-up;
+					drive-strength = <2>;
+				};
+
+				data {
+					pins = "sdc1_data";
+					bias-pull-up;
+					drive-strength = <2>;
+				};
+
+				rclk {
+					pins = "sdc1_rclk";
+					bias-pull-down;
+				};
+			};
+
+			sdc2_state_on: sdc2-on {
+				clk {
+					pins = "sdc2_clk";
+					bias-disable;
+					drive-strength = <16>;
+				};
+
+				cmd {
+					pins = "sdc2_cmd";
+					bias-pull-up;
+					drive-strength = <10>;
+				};
+
+				data {
+					pins = "sdc2_data";
+					bias-pull-up;
+					drive-strength = <10>;
+				};
+
+				sd-cd {
+					pins = "gpio54";
+					bias-pull-up;
+					drive-strength = <2>;
+				};
+			};
+
+			sdc2_state_off: sdc2-off {
+				clk {
+					pins = "sdc2_clk";
+					bias-disable;
+					drive-strength = <2>;
+				};
+
+				cmd {
+					pins = "sdc2_cmd";
+					bias-pull-up;
+					drive-strength = <2>;
+				};
+
+				data {
+					pins = "sdc2_data";
+					bias-pull-up;
+					drive-strength = <2>;
+				};
+
+				sd-cd {
+					pins = "gpio54";
+					bias-disable;
+					drive-strength = <2>;
+				};
+			};
+		};
+
+		/* adreno, kgsl_smmu, gpucc, ... */
+		/* spmi pmic arb */
+		/* usb, usb2phy */
+
+		sdhc_2: sdhci@c084000 {
+			compatible = "qcom,sdm630-sdhci", "qcom,sdhci-msm-v5";
+			reg = <0x0c084000 0x1000>;
+			reg-names = "hc";
+
+			//interrupts = <GIC_SPI 125 IRQ_TYPE_LEVEL_HIGH>,
+			//		<GIC_SPI 221 IRQ_TYPE_LEVEL_HIGH>;
+			//interrupt-names = "hc_irq", "pwr_irq";
+
+			bus-width = <4>;
+			clocks = <&gcc GCC_SDCC2_APPS_CLK>,
+					<&gcc GCC_SDCC2_AHB_CLK>,
+					<&xo_board>;
+			clock-names = "core", "iface", "xo";
+
+			//interconnects = <&a2noc 3 &a2noc 10>,
+			//		<&gnoc 0 &cnoc 28>;
+			//operating-points-v2 = <&sdhc2_opp_table>;
+
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&sdc2_state_on>;
+			pinctrl-1 = <&sdc2_state_off>;
+			//power-domains = <&rpmpd SDM660_VDDCX>;
+
+			status = "disabled";
+		};
+
+		sdhc_1: sdhci@c0c4000 {
+			compatible = "qcom,sdm630-sdhci", "qcom,sdhci-msm-v5";
+			reg = <0x0c0c4000 0x1000>,
+			      <0x0c0c5000 0x1000>,
+			      <0x0c0c8000 0x8000>;
+			reg-names = "hc", "cqhci", "ice";
+
+			//interrupts = <GIC_SPI 110 IRQ_TYPE_LEVEL_HIGH>,
+			//		<GIC_SPI 112 IRQ_TYPE_LEVEL_HIGH>;
+			//interrupt-names = "hc_irq", "pwr_irq";
+
+			clocks = <&gcc GCC_SDCC1_APPS_CLK>,
+				 <&gcc GCC_SDCC1_AHB_CLK>,
+				 <&xo_board>,
+				 <&gcc GCC_SDCC1_ICE_CORE_CLK>;
+			clock-names = "core", "iface", "xo", "ice";
+
+			//interconnects = <&a2noc 2 &a2noc 10>,
+			//		<&gnoc 0 &cnoc 27>;
+			//interconnect-names = "sdhc1-ddr", "cpu-sdhc1";
+			//operating-points-v2 = <&sdhc1_opp_table>;
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&sdc1_state_on>;
+			pinctrl-1 = <&sdc1_state_off>;
+			//power-domains = <&rpmpd SDM660_VDDCX>;
+
+			bus-width = <8>;
+			non-removable;
+
+			status = "disabled";
+		};
+
+		/* mmcc, mdss */
+
+		blsp1_uart2: serial@c170000 {
+			compatible = "qcom,msm-uartdm-v1.4", "qcom,msm-uartdm";
+			reg = <0x0c170000 0x1000>;
+			//interrupts = <GIC_SPI 108 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&gcc GCC_BLSP1_UART2_APPS_CLK>,
+				 <&gcc GCC_BLSP1_AHB_CLK>;
+			clock-names = "core", "iface";
+			status = "disabled";
+		};
+
+		spmi_bus: spmi@c440000 {
+			compatible = "qcom,spmi-pmic-arb";
+			reg = <0x0800a000 0x3000>,
+			      <0x0800f000 0x1000>,
+			      <0x09400000 0x1000000>;
+			reg-names = "cnfg", "core", "obsrvr";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			pmic0: pm660@0 {
+				compatible = "qcom,spmi-pmic";
+				reg = <0x0 SPMI_USID>; /* SPMI_USID == 0 */
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				pm660_pon: pm660_pon@800 {
+					compatible = "qcom,pm8998-pwrkey";
+					reg = <0x800>;
+					#gpio-cells = <2>;
+					gpio-controller;
+					gpio-count = <2>;
+					gpio-bank-name = "pm660_key.";
+				};
+
+				pm660_gpios: pm660_gpios@c000 {
+					compatible = "qcom,pm8998-gpio";
+					reg = <0xc000>;
+					gpio-controller;
+					gpio-count = <13>;
+					#gpio-cells = <2>;
+					gpio-bank-name = "pm660_gpios.";
+				};
+			};
+		};
+	};
+};

@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * U-Boot addition to handle Xiaomi Redmi Note 7 (lavender) pins
+ *
+ * (C) Copyright 2022 Alexey Minnekhanov <alexeymin@postmarketos.org>
+ *
+ */
+
+&gcc {
+	u-boot,dm-pre-reloc;
+};
+
+&sdhc_1 {
+	index = <0>;
+};
+
+&sdhc_2 {
+	index = <1>;
+};
+
+&simplefb {
+	u-boot,dm-pre-reloc;
+};
+
+&soc {
+	u-boot,dm-pre-reloc;
+};
+
+&tlmm {
+	u-boot,dm-pre-reloc;
+};
