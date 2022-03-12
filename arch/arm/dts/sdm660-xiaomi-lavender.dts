@@ -1,0 +1,102 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Xiaomi Redmi Note 7 (lavender) board device tree source
+ *
+ * (C) Copyright 2022 Alexey Minnekhanov <alexeymin@postmarketos.org>
+ *
+ */
+
+/dts-v1/;
+
+#include "sdm660.dtsi"
+
+/ {
+	model = "Xiaomi Redmi Note 7 (lavender)";
+	compatible = "xiaomi,lavender", "qcom,sdm660";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	aliases {
+		serial0 = &blsp1_uart2;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0 0x40000000 0 (0x60000000 + 0x5eac0000)>;
+		/*
+		 * From stock bootloader output:
+		 * Add Base: 0x0000000040000000 Available Length: 0x0000000060000000 
+		 * Add Base: 0x00000000A0000000 Available Length: 0x000000005EAC0000
+		 */
+	};
+
+	simplefb: framebuffer@9d400000 {
+		compatible = "simple-framebuffer";
+		reg = <0x0 0x9d400000 0x0 (1080 * 2340 * 4)>;
+		width = <1080>;
+		height = <2340>;
+		stride = <(1080 * 4)>;
+		format = "a8r8g8b8";
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		/* Stock 1st stage bootloader is looking for this node -
+		 * it must be named exactly this way.
+		 * Stock BL fills in the address and size (we already know it though) */
+		cont_splash_mem: splash_region@9d400000 {
+			reg = <0x0 0x9d400000 0x0 0x2400000>;
+			label = "cont_splash_mem";
+			no-map;
+		};
+	};
+
+	psci {
+		compatible = "arm,psci-1.0";
+		method = "smc";
+	};
+};
+
+/* blsp1_uart2 is used as debug_uart */
+&blsp1_uart2 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&blsp1_uart2_default>;
+};
+
+&sdhc_1 {
+	status = "okay";
+
+	/* linux DTS calls this property "clocks", u-boot for some reason wants "clock" */
+	clock = <&gcc GCC_SDCC1_APPS_CLK>,
+		<&gcc GCC_SDCC1_AHB_CLK>;
+
+	//supports-cqe;
+	//mmc-ddr-1_8v;
+	//mmc-hs200-1_8v;
+	//mmc-hs400-1_8v;
+
+	// vmmc-supply = <&vreg_l4b_2p95>;
+	// vqmmc-supply = <&vreg_l8a_1p8>;
+};
+
+&sdhc_2 {
+	// status = "okay";
+
+	// vmmc-supply = <&vreg_l5b_2p95>;
+	// vqmmc-supply = <&vreg_l2b_2p95>;
+};
+
+&tlmm {
+	gpio-reserved-ranges = <8 4>;
+};
+
+#include "sdm660-uboot.dtsi"

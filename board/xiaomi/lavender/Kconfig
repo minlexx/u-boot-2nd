@@ -1,0 +1,32 @@
+if TARGET_XIAOMI_LAVENDER
+
+# Define CONFIG_SYS_BOARD="board" to compile
+#        board/<board>/*
+#        board/<vendor>/<board>/* (if CONFIG_SYS_VENDOR is defined)
+config SYS_BOARD
+	default "lavender"
+	help
+	  Xiaomi Redmi Note 7 is a mid-range mobile phone based
+	  on Qualcomm Sanpdragon 660 SoC.
+
+# Define CONFIG_SYS_VENDOR="vendor" to compile
+#        board/<vendor>/common/*
+#        board/<vendor>/<board>/*
+config SYS_VENDOR
+	default "xiaomi"
+
+# Define CONFIG_SYS_SOC="soc" to compile
+#        arch/<arch>/cpu/<cpu>/<soc>
+config SYS_SOC
+	default "sdm660"
+
+# Define CONFIG_SYS_CONFIG_NAME="target" to include: include/configs/<target>.h
+config SYS_CONFIG_NAME
+	string "Board configuration name"
+	default "xiaomi-lavender"
+	help
+	  This option contains information about board configuration name.
+	  Based on this option include/configs/<CONFIG_SYS_CONFIG_NAME>.h header
+	  will be used for board configuration.
+
+endif
