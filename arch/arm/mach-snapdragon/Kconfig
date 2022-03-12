@@ -61,10 +61,24 @@ config TARGET_STARQLTECHN
 	select SDM845
 	select DM_ETH if NET
 
+config TARGET_XIAOMI_LAVENDER
+	bool "Xiaomi Redmi Note 7 (lavender)"
+	help
+	  Support for Xiaomi Redmi Note 7 (lavender) phone.
+	  Supports U-Boot only as secondary bootloader.
+	  Features:
+	  - Qualcomm Snapdragon SDM660 SoC
+	  - 3/4 GiB RAM
+	  - 32/64 GiB eMMC
+	  - SD Card slot
+	select MISC_INIT_R
+	select SDM660
+
 endchoice
 
 source "board/qualcomm/dragonboard410c/Kconfig"
 source "board/qualcomm/dragonboard820c/Kconfig"
 source "board/samsung/starqltechn/Kconfig"
+source "board/xiaomi/lavender/Kconfig"
 
 endif

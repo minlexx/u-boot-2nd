@@ -1,0 +1,7 @@
+Xiaomi Redmi Note 7 (lavender) board
+M:	Alexey Minnekhanov <alexeymin@postmarketos.org>
+S:	Maintained
+F:	board/xiaomi/lavender/
+F:	include/configs/xiaomi-lavender.h
+F:	configs/lavender_defconfig
+#F:	doc/board/xiaomi/lavender.rst
