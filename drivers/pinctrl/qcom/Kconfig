@@ -1,0 +1,12 @@
+if ARCH_SNAPDRAGON
+
+config PINCTRL_QUALCOMM
+	bool "Qualcomm pin control (TLMM) drivers"
+	depends on ARCH_SNAPDRAGON && PINCTRL_GENERIC
+	default y
+	help
+	  Enable support for pin controllers (Top Level Mode Multiplexers)
+	  in Qualcomm SoCs. This option will automatically build support
+	  for currently selected target SoC.
+
+endif
