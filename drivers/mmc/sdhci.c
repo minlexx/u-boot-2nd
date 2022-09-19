@@ -7,6 +7,8 @@
  * Murray.Jensen@cmst.csiro.au, 27-Jan-01.
  */
 
+#define DEBUG
+
 #include <common.h>
 #include <cpu_func.h>
 #include <dm.h>
@@ -870,7 +872,7 @@ int sdhci_setup_cfg(struct mmc_config *cfg, struct sdhci_host *host,
 #else
 	caps = sdhci_readl(host, SDHCI_CAPABILITIES);
 #endif
-	debug("%s, caps: 0x%x\n", __func__, caps);
+	log_debug("%s, caps: 0x%x\n", __func__, caps);
 
 #ifdef CONFIG_MMC_SDHCI_SDMA
 	if ((caps & SDHCI_CAN_DO_SDMA)) {
