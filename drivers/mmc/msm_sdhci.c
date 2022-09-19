@@ -132,8 +132,10 @@ static int msm_sdc_probe(struct udevice *dev)
 
 	/* Init clocks */
 	ret = msm_sdc_clk_init(dev);
-	if (ret)
+	if (ret) {
+		log_debug("msm_sdc_probe: msm_sdc_clk_init() failed!");
 		return ret;
+	}
 
 	var_info = (void *)dev_get_driver_data(dev);
 	if (!var_info->mci_removed) {
