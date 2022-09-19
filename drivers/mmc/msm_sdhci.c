@@ -34,7 +34,12 @@
 #define SDCC_MCI_HC_MODE 0x78
 
 /* Non standard (?) SDHCI register */
-#define SDHCI_VENDOR_SPEC_CAPABILITIES0  0x11c
+#define SDHCI_VENDOR_SPEC_CAPABILITIES0   0x11c
+#define SDHCI_VENDOR_SPEC_CAPABILITIES_V5 0x21c
+#define SDHCI_CORE_VENDOR_SPEC            0x20c
+
+#define CORE_VENDOR_SPEC_POR_VAL	0xa9c  /* mainline linux value */
+#define CORE_VENDOR_SPEC_POR_VAL_DS	0xa1c  /* the value used in downstream msm sdhci driver */
 
 struct msm_sdhc_plat {
 	struct mmc_config cfg;
@@ -64,26 +69,38 @@ static int msm_sdc_clk_init(struct udevice *dev)
 	int ret;
 
 	ret = fdtdec_get_int_array(gd->fdt_blob, node, "clock", clkd, 2);
-	if (ret)
+	if (ret) {
+		log_debug("msm_sdc_clk_init: no \"clock\" property!\n");
 		return ret;
+	}
 
 	clk_offset = fdt_node_offset_by_phandle(gd->fdt_blob, clkd[0]);
-	if (clk_offset < 0)
+	if (clk_offset < 0) {
+		log_debug("msm_sdc_clk_init: can't find referenced clock!\n");
 		return clk_offset;
+	}
 
 	ret = uclass_get_device_by_of_offset(UCLASS_CLK, clk_offset, &clk_dev);
-	if (ret)
+	if (ret) {
+		log_debug("msm_sdc_clk_init: can't get clock controller device!\n");
 		return ret;
+	}
 
 	clk.id = clkd[1];
 	ret = clk_request(clk_dev, &clk);
-	if (ret < 0)
+	if (ret < 0) {
+		log_debug("msm_sdc_clk_init: can't request the clock!\n");
 		return ret;
+	}
 
 	ret = clk_set_rate(&clk, clk_rate);
 	clk_free(&clk);
-	if (ret < 0)
+	if (ret < 0) {
+		log_debug("msm_sdc_clk_init: can't set clock rate %u!\n", clk_rate);
 		return ret;
+	}
+
+	log_debug("msm_sdc_clk_init: OK\n");
 
 	return 0;
 }
@@ -124,22 +141,46 @@ static int msm_sdc_probe(struct udevice *dev)
 	struct sdhci_host *host = &prv->host;
 	u32 core_version, core_minor, core_major;
 	u32 caps;
+	u32 tmp;
 	int ret;
 
 	host->quirks = SDHCI_QUIRK_WAIT_SEND_CMD | SDHCI_QUIRK_BROKEN_R1B;
 
 	host->max_clk = 0;
 
+#if CONFIG_IS_ENABLED(TARGET_XIAOMI_LAVENDER)
+	lavender_hacky_sdcc_clocks_init();
+#else
 	/* Init clocks */
 	ret = msm_sdc_clk_init(dev);
-	if (ret)
+	if (ret) {
+		log_debug("msm_sdc_probe: msm_sdc_clk_init() failed!");
 		return ret;
+	}
+#endif
+
+#if CONFIG_IS_ENABLED(TARGET_XIAOMI_LAVENDER)
+	//lavender_dump_sdcc1_clk_regs();
+#endif
 
 	var_info = (void *)dev_get_driver_data(dev);
 	if (!var_info->mci_removed) {
 		ret = msm_sdc_mci_init(prv);
 		if (ret)
 			return ret;
+	} else {
+		log_debug("msm_sdhci: V5 mode, ioaddr = %p\n", host->ioaddr);
+
+		// doesn't matter?
+		tmp = readl(host->ioaddr + SDHCI_CORE_VENDOR_SPEC);
+		log_debug("msm_sdhci: CORE_VENDOR_SPEC value init = %x\n", tmp);
+		// msm_sdhci: CORE_VENDOR_SPEC value init = a0c
+		// sometimes  CORE_VENDOR_SPEC value init = 240a0e (????)
+
+		/* Reset the vendor spec register to power on reset state */
+		writel(CORE_VENDOR_SPEC_POR_VAL, host->ioaddr + SDHCI_CORE_VENDOR_SPEC);
+		tmp = readl(host->ioaddr + SDHCI_CORE_VENDOR_SPEC);
+		log_debug("msm_sdhci: CORE_VENDOR_SPEC new value = %x\n", tmp);
 	}
 
 	if (!var_info->mci_removed)
@@ -152,6 +193,9 @@ static int msm_sdc_probe(struct udevice *dev)
 
 	core_minor = core_version & SDCC_VERSION_MINOR_MASK;
 
+	log_debug("msm_sdc_probe: SDCC Version: %u.%u (0x%x.0x%x)\n", core_major, core_minor, core_major, core_minor);
+	// ^^ "SDCC Version: 1.107 (0x1.0x6b)"
+
 	/*
 	 * Support for some capabilities is not advertised by newer
 	 * controller versions and must be explicitly enabled.
@@ -159,7 +203,11 @@ static int msm_sdc_probe(struct udevice *dev)
 	if (core_major >= 1 && core_minor != 0x11 && core_minor != 0x12) {
 		caps = readl(host->ioaddr + SDHCI_CAPABILITIES);
 		caps |= SDHCI_CAN_VDD_300 | SDHCI_CAN_DO_8BIT;
-		writel(caps, host->ioaddr + SDHCI_VENDOR_SPEC_CAPABILITIES0);
+		log_debug("msm_sdc_probe: Writing vendor spec capabilities...\n");
+		if (var_info->mci_removed)
+			writel(caps, host->ioaddr + SDHCI_VENDOR_SPEC_CAPABILITIES0);
+		else
+			writel(caps, host->ioaddr + SDHCI_VENDOR_SPEC_CAPABILITIES_V5);
 	}
 
 	ret = mmc_of_parse(dev, &plat->cfg);
