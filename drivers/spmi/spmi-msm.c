@@ -191,11 +191,11 @@ static int msm_spmi_probe(struct udevice *dev)
 	u32 version;
 	int i;
 
-	config_addr = dev_read_addr_index(dev, 0);
-	priv->spmi_core = dev_read_addr_index(dev, 1);
-	priv->spmi_obs = dev_read_addr_index(dev, 2);
+	config_addr = dev_read_addr_name(dev, "cnfg");
+	priv->spmi_core = dev_read_addr_name(dev, "core");
+	priv->spmi_obs = dev_read_addr_name(dev, "obsrvr");
 
-	hw_ver = readl(config_addr + PMIC_ARB_VERSION);
+	hw_ver = readl(priv->spmi_core + PMIC_ARB_VERSION);
 
 	if (hw_ver < PMIC_ARB_VERSION_V3_MIN) {
 		priv->arb_ver = V2;
@@ -218,9 +218,10 @@ static int msm_spmi_probe(struct udevice *dev)
 	    priv->spmi_obs == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
-	dev_dbg(dev, "priv->arb_chnl address (%llu)\n", priv->arb_chnl);
-	dev_dbg(dev, "priv->spmi_core address (%llu)\n", priv->spmi_core);
-	dev_dbg(dev, "priv->spmi_obs address (%llu)\n", priv->spmi_obs);
+	dev_dbg(dev, "priv->arb_chnl address (%llx)\n", priv->arb_chnl);
+	dev_dbg(dev, "priv->spmi_core address (%llx)\n", priv->spmi_core);
+	dev_dbg(dev, "priv->spmi_obs address (%llx)\n", priv->spmi_obs);
+
 	/* Scan peripherals connected to each SPMI channel */
 	for (i = 0; i < SPMI_MAX_PERIPH; i++) {
 		uint32_t periph = readl(priv->arb_chnl + ARB_CHANNEL_OFFSET(i));
