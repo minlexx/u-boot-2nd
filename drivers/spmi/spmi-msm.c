@@ -190,7 +190,6 @@ static int msm_spmi_probe(struct udevice *dev)
 	u32 hw_ver;
 	u32 version;
 	int i;
-	int err;
 
 	config_addr = dev_read_addr_index(dev, 0);
 	priv->spmi_core = dev_read_addr_index(dev, 1);
@@ -210,11 +209,6 @@ static int msm_spmi_probe(struct udevice *dev)
 		priv->arb_ver = V5;
 		version = 5;
 		priv->arb_chnl = config_addr + APID_MAP_OFFSET_V5;
-
-		if (err) {
-			dev_err(dev, "could not read APID->PPID mapping table, rc= %d\n", err);
-			return -1;
-		}
 	}
 
 	dev_dbg(dev, "PMIC Arb Version-%d (0x%x)\n", version, hw_ver);
