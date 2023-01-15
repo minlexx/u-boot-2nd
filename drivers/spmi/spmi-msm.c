@@ -92,13 +92,16 @@ static int msm_spmi_write(struct udevice *dev, int usid, int pid, int off,
 		return -EIO;
 
 	channel = priv->channel_map[usid][pid];
+	if (priv->arb_ver == V5)
+		ch_offset = SPMI_V5_RW_CH_OFFSET(channel);
+	else
+		ch_offset = SPMI_CH_OFFSET(channel);
 
 	/* Disable IRQ mode for the current channel*/
-	writel(0x0,
-	       priv->spmi_core + SPMI_CH_OFFSET(channel) + SPMI_REG_CONFIG);
+	writel(0x0, priv->spmi_core + ch_offset + SPMI_REG_CONFIG);
 
 	/* Write single byte */
-	writel(val, priv->spmi_core + SPMI_CH_OFFSET(channel) + SPMI_REG_WDATA);
+	writel(val, priv->spmi_core + ch_offset + SPMI_REG_WDATA);
 
 	/* Prepare write command */
 	reg |= SPMI_CMD_EXT_REG_WRITE_LONG << SPMI_CMD_OPCODE_SHIFT;
@@ -107,19 +110,13 @@ static int msm_spmi_write(struct udevice *dev, int usid, int pid, int off,
 	reg |= (off << SPMI_CMD_ADDR_OFFSET_SHIFT);
 	reg |= 1; /* byte count */
 
-	if (priv->arb_ver == V5)
-		ch_offset = SPMI_V5_RW_CH_OFFSET(channel);
-	else
-		ch_offset = SPMI_CH_OFFSET(channel);
-
 	/* Send write command */
-	writel(reg, priv->spmi_core + SPMI_CH_OFFSET(channel) + SPMI_REG_CMD0);
+	writel(reg, priv->spmi_core + ch_offset + SPMI_REG_CMD0);
 
 	/* Wait till CMD DONE status */
 	reg = 0;
 	while (!reg) {
-		reg = readl(priv->spmi_core + SPMI_CH_OFFSET(channel) +
-			    SPMI_REG_STATUS);
+		reg = readl(priv->spmi_core + ch_offset + SPMI_REG_STATUS);
 	}
 
 	if (reg ^ SPMI_STATUS_DONE) {
