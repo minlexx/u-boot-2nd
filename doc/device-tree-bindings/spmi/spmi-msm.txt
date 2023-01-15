@@ -1,13 +1,17 @@
 Qualcomm SPMI arbiter/bus driver
 
 This is bus driver for Qualcomm chips that use SPMI to communicate with PMICs.
+The SPMI PMIC Arbiter is found on Snapdragon chipsets. It is an SPMI
+controller with wrapping arbitration logic to allow for multiple on-chip
+devices to control a single SPMI master.
 
 Required properties:
 - compatible: "qcom,spmi-pmic-arb"
 - reg: Register block adresses and sizes for various parts of device:
-   1) PMIC arbiter channel mapping base (PMIC_ARB_REG_CHNLn)
-   2) SPMI write command (master) registers (PMIC_ARB_CORE_SW_DEC_CHANNELS)
-   3) SPMI read command (observer) registers (PMIC_ARB_CORE_REGISTERS_OBS)
+   1) PMIC arbiter core registers
+   2) SPMI configuration registers
+   3) SPMI read command (observer) registers
+- reg-names: "core", "cnfg", "obsrvr" for corresponding reg values
 
 Optional properties (if not set by parent):
 - #address-cells: 0x1 - childs slave ID address
@@ -18,9 +22,12 @@ Automatic detection of childs is currently not supported.
 
 Example:
 
-spmi@200f000 {
+spmi@fc4cf000 {
 	compatible = "qcom,spmi-pmic-arb";
-	reg = <0x200f800 0x200 0x2400000 0x400000 0x2c00000 0x400000>;
-	#address-cells = <0x1>;
-	#size-cells = <0x1>;
+	reg = <0xfc4cf000 0x1000>,
+	      <0xfc4cb000 0x1000>,
+	      <0xfc4ca000 0x1000>;
+	reg-names = "core", "cnfg", "obsrvr";
+	#address-cells = <1>;
+	#size-cells = <1>;
 };
