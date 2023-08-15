@@ -9,29 +9,26 @@
 /dts-v1/;
 
 #include "sdm845.dtsi"
+<<<<<<< HEAD
+=======
+#include "pm8998.dtsi"
+>>>>>>> da329ae0ba (dts: sdm845: import DT from Linux)
 
 / {
 	model = "Samsung S9 (SM-G9600)";
 	compatible = "qcom,sdm845-mtp", "qcom,sdm845", "qcom,mtp";
-	#address-cells = <2>;
-	#size-cells = <2>;
-
-	chosen {
-		stdout-path = "serial0:921600n8";
-	};
 
 	aliases {
 		serial0 = &debug_uart;
 	};
 
-	memory {
-		device_type = "memory";
-		reg = <0 0x80000000 0 0xfe1bffff>;
+	chosen {
+		stdout-path = "serial0:921600n8";
 	};
 
-	psci {
-		compatible = "arm,psci-1.0";
-		method = "smc";
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0 0x80000000 0 0xfe1bffff>;
 	};
 
 	framebuffer: framebuffer@9D400000 {
@@ -42,6 +39,7 @@
 		stride = <(1440 * 4)>;
 		format = "a8r8g8b8";
 	};
+<<<<<<< HEAD
 
 	soc: soc {
 		serial@a84000 {
@@ -56,7 +54,23 @@
 				bias-disable;
 			};
 		};
+=======
+};
+
+&pm8998_resin {
+	status = "okay";
+};
+
+&tlmm {
+	muic-i2c-n {
+		pins = "gpio33", "gpio34";
+		drive-strength = <0x2>;
+		function = "gpio";
+		bias-disable;
+>>>>>>> da329ae0ba (dts: sdm845: import DT from Linux)
 	};
 };
 
-#include "starqltechn-uboot.dtsi"
+&uart9 {
+	status = "okay";
+};
