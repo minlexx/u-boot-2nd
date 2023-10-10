@@ -620,11 +620,21 @@ static void acm_stdio_puts(struct stdio_dev *dev, const char *str)
 
 static int acm_stdio_start(struct stdio_dev *dev)
 {
+	//struct udevice *udc;
 	int ret;
 
 	if (dev->priv) { /* function already exist */
 		return 0;
 	}
+
+	//ret = udc_device_get_by_index(0, &udc);
+	ret = usb_gadget_initialize(0);
+	if (ret) {
+		pr_err("USB gadget init failed: %d\n", ret);
+		return ret;
+	}
+
+	g_dnl_clear_detach();
 
 	ret = g_dnl_register("usb_serial_acm");
 	if (ret)
