@@ -99,4 +99,22 @@
 	gpio-reserved-ranges = <8 4>;
 };
 
+/* USB stuff */
+
+&qusb2phy0 {
+	status = "okay";
+	/* no regulators in u-boot
+	vdd-supply = <&vreg_l1b_0p925>;
+	vdda-phy-dpdm-supply = <&vreg_l7b_3p125>; */
+};
+
+&usb3 {
+	status = "okay";
+};
+
+&usb3_dwc3 {
+	dr_mode = "peripheral";
+	/* extcon = <&extcon_usb>; // no extcon in u-boot */
+};
+
 #include "sdm660-uboot.dtsi"
