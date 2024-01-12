@@ -131,6 +131,22 @@ static const struct qcom_reset_map gcc_qcom_resets[] = {
 };
 #endif
 
+#ifdef CONFIG_SDM660
+#include <dt-bindings/clock/qcom,gcc-sdm660.h>
+static const struct qcom_reset_map gcc_qcom_resets[] = {
+	[GCC_QUSB2PHY_PRIM_BCR] = { 0x12000, 0 },
+	[GCC_QUSB2PHY_SEC_BCR] = { 0x12004, 0 },
+	[GCC_UFS_BCR] = { 0x75000, 0 },
+	[GCC_USB3_DP_PHY_BCR] = { 0x50028, 0 },
+	[GCC_USB3_PHY_BCR] = { 0x50020, 0 },
+	[GCC_USB3PHY_PHY_BCR] = { 0x50024, 0 },
+	[GCC_USB_20_BCR] = { 0x2f000, 0 },
+	[GCC_USB_30_BCR] = { 0xf000, 0 },
+	[GCC_USB_PHY_CFG_AHB2PHY_BCR] = { 0x6a000, 0 },
+	/*[GCC_MSS_RESTART] = { 0x79000 }, */ // not in bindings, outdated?..
+};
+#endif /* CONFIG_SDM660 */
+
 static int qcom_reset_assert(struct reset_ctl *rst)
 {
 	struct qcom_reset_priv *priv = dev_get_priv(rst->dev);
@@ -171,6 +187,7 @@ static const struct reset_ops qcom_reset_ops = {
 static const struct udevice_id qcom_reset_ids[] = {
 	{ .compatible = "qcom,gcc-reset-ipq4019" },
 	{ .compatible = "qcom,gcc-reset-qcs404" },
+	{ .compatible = "qcom,gcc-reset-sdm660" },
 	{ }
 };
 
