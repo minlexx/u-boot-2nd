@@ -329,6 +329,7 @@ static struct msm_serial_data init_serial_data = {
 /* Uncomment to turn on UART clocks when debugging U-Boot as aboot on MSM8916 */
 //int apq8016_clk_init_uart(phys_addr_t gcc_base, unsigned long id);
 
+#if 0
 static inline void _debug_uart_init(void)
 {
 	if (IS_ENABLED(CONFIG_DEBUG_UART_SKIP_INIT))
@@ -356,6 +357,52 @@ static inline void _debug_uart_putc(int ch)
 
 	writel(1, priv->base + UARTDM_NCF_TX);
 	writel(ch, priv->base + UARTDM_TF);
+}
+#endif
+
+/* values from xiaomi-clover downstream TWRP DT */
+#define RAMOOPS_BASE 0x9fe00000
+#define RAMOOPS_SIZE 0x100000
+#define CONSOLE_SIZE 0x80000
+#define FTRACE_SIZE  0x1000
+#define RECORD_SIZE  0x1000
+#define PMSG_SIZE    0x8000
+
+#define DUMPS_SIZE    (RAMOOPS_SIZE - CONSOLE_SIZE - FTRACE_SIZE - PMSG_SIZE)
+#define CONSOLE_BASE  (RAMOOPS_BASE + DUMPS_SIZE)
+
+#define PERSISTENT_RAM_SIG (0x43474244) /* DBGC */
+
+struct persistent_ram_buffer {
+	u32    sig;
+	u32    start;
+	u32    size;
+	u8     data[0];
+};
+
+static struct persistent_ram_buffer *console_zone;
+static char *write_offset;
+
+static inline void _debug_uart_init(void)
+{
+	console_zone = (struct persistent_ram_buffer *)CONSOLE_BASE;
+	console_zone->sig = PERSISTENT_RAM_SIG;
+	console_zone->start = 0;
+	console_zone->size = 0;
+
+	write_offset = (char *)console_zone->data;
+}
+
+static inline void _debug_uart_putc(int ch)
+{
+	if (console_zone->size >= CONSOLE_SIZE - sizeof(struct persistent_ram_buffer))
+		return;
+
+	(*write_offset) = (char)( ch & 0xff );
+	write_offset++;
+
+	console_zone->size++;
+	console_zone->start++;
 }
 
 DEBUG_UART_FUNCS
